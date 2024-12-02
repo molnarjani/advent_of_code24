@@ -1,24 +1,59 @@
 package day2
 
 import (
+	"bufio"
 	"math"
+	"os"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 type Report struct {
 	levels []int
 }
 
-func sortDesc(l []int) {
-	sort.Slice(l, func(i, j int) bool {
-		return l[i] < l[j]
-	})
+// solve gives the solution to day2 challenge by:
+// 1. calculating if a report is valid by:
+//  1. a, checking if numbers in report is all increasing or all decreasing
+//  1. b, checking if adjacent numbers in list are increasing or decreasing by at least 1 and at most 3
+//
+// 2. adding the valid reports together
+func solveA(reports []Report) int {
+	validCount := 0
+	for _, r := range reports {
+		validCount += calculateValidityA(r)
+	}
+	return validCount
 }
 
-func sortAsc(l []int) {
-	sort.Slice(l, func(i, j int) bool {
-		return l[i] > l[j]
-	})
+// solve gives the solution to day2 challenge by:
+// calculates validity using calculateValidityA
+// if the result is wrong, tries removing each element from the list
+// and retry if removing one element solves the problem
+func solveB(reports []Report) int {
+	validCount := 0
+	for _, r := range reports {
+		valid := calculateValidityA(r)
+		if valid == 1 {
+			validCount += 1
+		} else {
+			// make a new report for each possible variation for removing an item from the list
+			levelLen := len(r.levels)
+			for i := 0; i <= levelLen-1; i++ {
+				start := append([]int{}, r.levels[0:i]...)
+				end := append([]int{}, r.levels[i:levelLen]...)
+				concat := append(start, end[1:]...)
+				valid := calculateValidityA(Report{levels: concat})
+				if valid == 1 {
+					validCount += 1
+					break
+				}
+
+			}
+		}
+	}
+	return validCount
 }
 
 // calculateValidityA returns 1 if report is valid, 0 if report is invalid
@@ -68,45 +103,53 @@ func calculateValidityA(r Report) int {
 	return 1
 }
 
-// solve gives the solution to day2 challenge by:
-// 1. calculating if a report is valid by:
-//  1. a, checking if numbers in report is all increasing or all decreasing
-//  1. b, checking if adjacent numbers in list are increasing or decreasing by at least 1 and at most 3
-//
-// 2. adding the valid reports together
-func solveA(reports []Report) int {
-	validCount := 0
-	for _, r := range reports {
-		validCount += calculateValidityA(r)
-	}
-	return validCount
+// UTILS
+// utility function to sort a slice in descending order
+func sortDesc(l []int) {
+	sort.Slice(l, func(i, j int) bool {
+		return l[i] > l[j]
+	})
 }
 
-// solve gives the solution to day2 challenge by:
-// calculates validity using calculateValidityA
-// if the result is wrong, tries removing each element from the list
-// and retry if removing one element solves the problem
-func solveB(reports []Report) int {
-	validCount := 0
-	for _, r := range reports {
-		valid := calculateValidityA(r)
-		if valid == 1 {
-			validCount += 1
-		} else {
-			// make a new report for each possible variation for removing an item from the list
-			levelLen := len(r.levels)
-			for i := 0; i <= levelLen-1; i++ {
-				start := append([]int{}, r.levels[0:i]...)
-				end := append([]int{}, r.levels[i:levelLen]...)
-				concat := append(start, end[1:]...)
-				valid := calculateValidityA(Report{levels: concat})
-				if valid == 1 {
-					validCount += 1
-					break
-				}
+// utility function to sort a slice in ascending order
+func sortAsc(l []int) {
+	sort.Slice(l, func(i, j int) bool {
+		return l[i] < l[j]
+	})
+}
 
-			}
-		}
+// ReadInput reads the input file and returns a slice of Reports.
+// Each line in the input file represents a Report with space-separated integers.
+func ReadInput(filepath string) ([]Report, error) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
 	}
-	return validCount
+	defer file.Close()
+
+	var reports []Report
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+
+		parts := strings.Fields(line)
+		levels := make([]int, 0, len(parts))
+		for _, p := range parts {
+			num, err := strconv.Atoi(p)
+			if err != nil {
+				return nil, err
+			}
+			levels = append(levels, num)
+		}
+		reports = append(reports, Report{levels: levels})
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return reports, nil
 }
