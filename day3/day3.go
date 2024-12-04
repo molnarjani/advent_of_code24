@@ -16,7 +16,6 @@ func solveA(input string) int {
 
 	matches := re.FindAllString(input, -1)
 	for _, match := range matches {
-		fmt.Println(match)
 		numbers := reNumPtrn.FindAllString(match, -1)
 		if len(numbers) != 2 {
 			fmt.Println("invalid, too many or too few numbers: ", match)
@@ -43,16 +42,12 @@ func solveB(input string) int {
 
 	matches := re.FindAllString(input, -1)
 	for _, match := range matches {
-		fmt.Println(match)
-
 		if match == `do()` {
-			fmt.Println("found do")
 			mulEnabled = true
 			continue
 		}
 
 		if match == `don't()` {
-			fmt.Println("found don't")
 			mulEnabled = false
 			continue
 		}
